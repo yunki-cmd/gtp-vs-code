@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 import * as vscode from 'vscode';
 import path = require('path');
-import * as DOMPurify from 'dompurify';
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     private webView?: vscode.WebviewView;
@@ -21,7 +20,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
             enableScripts: true,
             localResourceRoots: [this.context.extensionUri],
         };
-        //vscode.Uri.file(path.join(this.context.extensionPath, 'dist'));
 
         webviewView.webview.html = this.getHtml(webviewView.webview);
 
@@ -38,19 +36,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     }
 
     public async ensureApiKey() {
-        this.apiKey = await this.context.globalState.get('chatgpt-api-key') as string;
-
+        let secret = await this.context.secrets;
+        this.apiKey = await secret.get('chatgpt-api-key') as string;
         if (!this.apiKey) {
             const apiKeyInput = await vscode.window.showInputBox({
                 prompt: "Please enter your OpenAI API Key, can be located at https://openai.com/account/api-keys",
                 ignoreFocusOut: true,
             });
             this.apiKey = apiKeyInput!;
-            this.context.globalState.update('chatgpt-api-key', this.apiKey);
+            secret.store('chatgpt-api-key', this.apiKey);
+            // this.context.globalState.update('chatgpt-api-key', this.apiKey);
         }
     }
 
-    public async sendOpenAiApiRequest(prompt: string, code?: string) {
+    public async sendOpenAiApiRequest(prompt: string | [], code?: string) {
         await this.ensureApiKey();
         if (!this.openAiApi) {
             try {
@@ -62,8 +61,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         }
 
         // Create question by adding prompt prefix to code, if provided
-        const questionArray = (code) ? `${prompt}: ${code}` : prompt;
-        const question = [{ role: 'user', content: questionArray }];
+        let question = prompt;
+        if (prompt instanceof Array) {
+            question = prompt;
+        } else {
+            const questionArray = (code) ? `${prompt}: ${code}` : prompt;
+            question = [{ role: 'user', content: questionArray }];
+        }
 
         if (!this.webView) {
             await vscode.commands.executeCommand('chatgpt-vscode-plugin.view.focus');
@@ -71,12 +75,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
             this.webView?.show?.(true);
         }
 
-        let response: String = '';
-
         this.sendMessageToWebView({ type: 'addQuestion', value: prompt, code });
         try {
             let currentMessageNumber = this.message;
             let completion;
+            console.log(question);
             try {
                 completion = await this.openAiApi.chat.completions.create({
                     model: 'gpt-3.5-turbo',
@@ -84,7 +87,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
                     temperature: 0.5,
                     stop: ['\n\n\n', '<|im_end|>'],
                 });
-                console.log(completion);
+
+               /*  for await (const part of completion) {
+                    console.log(part);
+                    console.log(part.choices[0]?.finish_reason);
+                    console.log(part.choices[0]?.delta || '');
+                    this.sendMessageToWebView({ type: 'addResponse', value: completion });
+                } */
+
             } catch (error: any) {
                 await vscode.window.showErrorMessage("Error sending request to ChatGPT", error);
                 return;
@@ -93,6 +103,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
             if (this.message !== currentMessageNumber) {
                 return;
             }
+
             /* response = completion?.choices[0].message.content || ''; */
 
             /* const REGEX_CODEBLOCK = new RegExp('\`\`\`', 'g');
@@ -101,7 +112,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
             if (count % 2 !== 0) {
                 response += '\n\`\`\`';
             } */
-            
+
             this.sendMessageToWebView({ type: 'addResponse', value: completion });
         } catch (error: any) {
             await vscode.window.showErrorMessage("Error sending request to ChatGPT", error);

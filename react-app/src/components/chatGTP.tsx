@@ -1,61 +1,76 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /// <reference types="vscode" />
 
 import { vscode } from '../main';
-import { marked  } from 'marked';
+import { marked } from 'marked';
 import { useEffect, useState, useRef } from 'react';
+
+// types
+
+import { ChatMessage, responseEvent } from '../types/types';
+
 const ChatGptComponent = () => {
 
-  const [message, setMessage] = useState();
+  //const [message, setMessage] = useState<ResposeCompletion>();
+
+  const [historyChats, setHistoryChats] = useState<ChatMessage[]>([]);
 
   const inputTextarea = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
 
-    vscode.postMessage({ type: 'appMounted', text: 'Hello from React!' });
-
     const handlerMesasge = (event: any) => {
-      const messageEvent = event.data;
-
+      const messageEvent: responseEvent = event.data;
       // Maneja el mensaje según su tipo
       if (messageEvent.type === 'addResponse') {
         // setea el mensaje que llega desde openai
-        setMessage(messageEvent.value)
-        console.log('Received updateText message:', messageEvent.value);
-      } else if (messageEvent.type === 'ok') {
-        // setea el mensaje que llega desde openai
-        console.log('Received ok message:', messageEvent.value);
-        setMessage(messageEvent.value)
+        
+        setHistoryChats(prevState => {
+          // Usar la forma de función para asegurarse de tener la última versión del estado
+          return [...prevState, messageEvent.value.choices[0].message];
+        });
       }
     }
     window.addEventListener('message', handlerMesasge);
     return () => {
-      window.removeEventListener('message',handlerMesasge);
-  };
+      window.removeEventListener('message', handlerMesasge);
+    };
 
   }, []);
 
-  function verificarVariable(valor:any) {
+  function verificarVariable(valor: any) {
     return (valor !== undefined || valor !== null || valor.length !== 0);
   }
 
-  const handlerAsk = () => { 
+  const handlerAsk = async () => {
     if (verificarVariable(inputTextarea.current?.value)) {
       const value = inputTextarea.current?.value;
-      vscode.postMessage({ type: 'askChatGPT', value});
+
+      if (value === undefined || value === null || value.trim().length === 0) {
+        return;
+      }
+
+      setHistoryChats((prevState:any) => {
+        // Usar la forma de función para asegurarse de tener la última versión del estado
+        const newHistoryChats = [...prevState, { role: 'user', content: value }];
+        if (newHistoryChats.length > 0) {
+          vscode.postMessage({ type: 'askChatGPT', value: newHistoryChats });
+        }
+        return newHistoryChats
+      });
     }
   }
+  const handlerCleanChat = () => {
+    setHistoryChats([])
+  }
 
-  const parseHtml = (html: any) => {
+  const parseHtml = (html: ChatMessage[]) => {
     if (html !== undefined && html !== null) {
-      console.log(html)
-      const resp = html?.choices
       let rawMarkup: string = "";
-      console.log(resp)
-      resp.forEach((element: { message: { content: string; }; }) => {
-        rawMarkup += `<div class="m-5">${marked.parse(element.message.content)}</div>`
-        console.log(rawMarkup)
+      html.forEach((element: ChatMessage) => {
+        rawMarkup += `<div class="m-5">${marked.parse(element.content)}</div>`
       });
-      return { __html: rawMarkup };
+      return { __html: rawMarkup }
     }
     return { __html: "<h2>chatea</h2>" };
   }
@@ -71,7 +86,7 @@ const ChatGptComponent = () => {
           <div>Please note, ChatGPT facing scaling issues which will impact this extension</div>
         </div>
       </div>
-      <div dangerouslySetInnerHTML={parseHtml(message) }></div>
+      <div dangerouslySetInnerHTML={parseHtml(historyChats!)}></div>
       <div className="p-4 flex items-center">
         <div className="flex-1">
           <textarea
@@ -82,7 +97,7 @@ const ChatGptComponent = () => {
           ></textarea>
         </div>
         <button id="ask-button" onClick={handlerAsk} className="p-2 ml-5">Ask</button>
-        <button id="clear-button" className="p-2 ml-3">Clear</button>
+        <button id="clear-button" onClick={handlerCleanChat} className="p-2 ml-3">Clear</button>
       </div>
     </div>
   );
