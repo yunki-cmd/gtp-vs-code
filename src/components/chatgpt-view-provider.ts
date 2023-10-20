@@ -2,6 +2,8 @@ import OpenAI from 'openai';
 import * as vscode from 'vscode';
 import path = require('path');
 
+import {requestGtpAzureStream, requestGtpAzure} from '../util/Completion';
+
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     private webView?: vscode.WebviewView;
     private openAiApi?: OpenAI;
@@ -26,7 +28,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(data => {
 
             if (data.type === 'askChatGPT') {
-                this.sendOpenAiApiRequest(data.value);
+                if(!data.azure){
+
+                    this.sendOpenAiApiRequest(data.value);
+                } else {
+                    this.sendOpenAiApiRequestAzure(data.value, data.stream);
+                }
             }
         });
         if (this.message !== null && this.message !== undefined) {
@@ -49,6 +56,15 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    public async sendOpenAiApiRequestAzure(prompt: string | [], stream:boolean){
+        if(!stream){
+            const result = await requestGtpAzure(prompt)
+            this.sendMessageToWebView({ type: 'addResponse', value: result });
+
+        }
+    }
+
+
     public async sendOpenAiApiRequest(prompt: string | [], code?: string) {
         await this.ensureApiKey();
         if (!this.openAiApi) {
@@ -61,7 +77,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         }
 
         // Create question by adding prompt prefix to code, if provided
-        let question = prompt;
+        let question:any = prompt;
         if (prompt instanceof Array) {
             question = prompt;
         } else {
@@ -149,45 +165,5 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
             <div id="root"></div>
         </body>
         </html>`;
-
-        /* const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.js'));
-        const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.css'));
-
-        return `<!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <link href="${stylesMainUri}" rel="stylesheet">
-                <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-                <script src="https://cdn.tailwindcss.com"></script>
-            </head>
-            <body class="overflow-hidden">
-                <div class="flex flex-col h-screen">
-                    <div class="flex-1 overflow-y-auto" id="qa-list"></div>
-                    <div id="in-progress" class="p-4 flex items-center hidden">
-                        <div style="text-align: center;">
-                            <div>Please wait while we handle your request ❤️</div>
-                            <div class="loader"></div>
-                            <div>Please note, ChatGPT facing scaling issues which will impact this extension</div>
-                        </div>
-                    </div>
-                    <div class="p-4 flex items-center">
-                        <div class="flex-1">
-                            <textarea
-                                type="text"
-                                rows="2"
-                                class="border p-2 w-full"
-                                id="question-input"
-                                placeholder="Ask a question..."
-                            ></textarea>
-                        </div>
-                        <button style="background: var(--vscode-button-background)" id="ask-button" class="p-2 ml-5">Ask</button>
-                        <button style="background: var(--vscode-button-background)" id="clear-button" class="p-2 ml-3">Clear</button>
-                    </div>
-                </div>
-                <script src="${scriptUri}"></script>
-            </body>
-            </html>`; */
     }
 }

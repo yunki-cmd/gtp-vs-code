@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/// <reference types="vscode" />
 
 import { vscode } from '../main';
 import { marked } from 'marked';
@@ -17,26 +16,30 @@ const ChatGptComponent = () => {
 
   const inputTextarea = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
+  const [azure, setAzure] = useState<boolean>(false)
 
-    const handlerMesasge = (event: any) => {
-      const messageEvent: responseEvent = event.data;
-      // Maneja el mensaje según su tipo
-      if (messageEvent.type === 'addResponse') {
-        // setea el mensaje que llega desde openai
-        
-        setHistoryChats(prevState => {
-          // Usar la forma de función para asegurarse de tener la última versión del estado
-          return [...prevState, messageEvent.value.choices[0].message];
-        });
-      }
-    }
+  useEffect(() => {
     window.addEventListener('message', handlerMesasge);
+
     return () => {
       window.removeEventListener('message', handlerMesasge);
     };
 
   }, []);
+
+
+  const handlerMesasge = (event: any) => {
+    const messageEvent: responseEvent = event.data;
+    // Maneja el mensaje según su tipo
+    if (messageEvent.type === 'addResponse') {
+      // setea el mensaje que llega desde openai
+      
+      setHistoryChats(prevState => {
+        // Usar la forma de función para asegurarse de tener la última versión del estado
+        return [...prevState, messageEvent.value.choices[0].message];
+      });
+    }
+  }
 
   function verificarVariable(valor: any) {
     return (valor !== undefined || valor !== null || valor.length !== 0);
@@ -54,12 +57,19 @@ const ChatGptComponent = () => {
         // Usar la forma de función para asegurarse de tener la última versión del estado
         const newHistoryChats = [...prevState, { role: 'user', content: value }];
         if (newHistoryChats.length > 0) {
-          vscode.postMessage({ type: 'askChatGPT', value: newHistoryChats });
+
+          if(azure){
+            vscode.postMessage({ type: 'askChatGPT', value: newHistoryChats, azure:true, stream: false });
+          } else {
+            vscode.postMessage({ type: 'askChatGPT', value: newHistoryChats, azure:false });
+          }
+
         }
         return newHistoryChats
       });
     }
   }
+
   const handlerCleanChat = () => {
     setHistoryChats([])
   }
@@ -73,6 +83,10 @@ const ChatGptComponent = () => {
       return { __html: rawMarkup }
     }
     return { __html: "<h2>chatea</h2>" };
+  }
+
+  const handlerCheck = () => {
+    setAzure(!azure)
   }
 
 
@@ -98,6 +112,7 @@ const ChatGptComponent = () => {
         </div>
         <button id="ask-button" onClick={handlerAsk} className="p-2 ml-5">Ask</button>
         <button id="clear-button" onClick={handlerCleanChat} className="p-2 ml-3">Clear</button>
+        <button id="check-button" onClick={handlerCheck} className="p-2 mr-3">Change</button>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import ChatGptViewProvider from './chatgpt-view-provider';
+import ChatGptViewProvider from './components/chatgpt-view-provider';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const chatViewProvider = new ChatGptViewProvider(context);
