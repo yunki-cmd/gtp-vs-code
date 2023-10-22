@@ -1,10 +1,10 @@
 
 interface ChatMessage {
-  role: 'assist' | 'user' | 'system';
+  role: 'assistant' | 'user' | 'system';
   content: string;
 }
 
-interface ResposeCompletion {
+export interface ResposeCompletion {
   id: string;
   object: string;
   created: number;
