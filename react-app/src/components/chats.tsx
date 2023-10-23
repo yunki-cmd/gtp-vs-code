@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChangeEvent } from "react";
 import { ListChats } from "./listChars";
+import SelectMoldes from './selectModels'
 import {useHistoryChat, useInputPromt } from "../store/strore"
 
 const ChatComponent = ({ historyChats, handlerAsk, disable, onChangeDisable }: any) => {
     const {promt, updatePromt}= useInputPromt()
     const {removeHistoryChats} = useHistoryChat()
+
 
   /*     const handleSendMessage = () => {
             if (inputMessage.trim() === '') return;
@@ -57,6 +59,7 @@ const ChatComponent = ({ historyChats, handlerAsk, disable, onChangeDisable }: a
           <div className="ml-3">
             <p className="text-xl font-medium">Your AI Assistant</p>
           </div>
+          <SelectMoldes />
         </div>
 
         <div className="space-y-4">
@@ -78,7 +81,6 @@ const ChatComponent = ({ historyChats, handlerAsk, disable, onChangeDisable }: a
                   className="m-0 w-full resize-none border-0 bg-transparent  outline-none text-black py-[10px] pr-10 focus:ring-0 focus-visible:ring-0 dark:bg-transparent md:py-4 md:pr-12 gizmo:md:py-3.5 gizmo:placeholder-black/50 gizmo:dark:placeholder-white/50 pl-3 md:pl-4"
                   value={promt}
                   onChange={handleTextareaChange}
-                  style={{ height: "auto", minHeight: "44px" }}
                 />
                 <button
                   className="absolute p-1 rounded-md md:bottom-3 gizmo:md:bottom-2.5 md:p-2 md:right-3 dark:hover:bg-gray-900 dark:disabled:hover:bg-transparent right-2 disabled:text-gray-400 enabled:bg-brand-purple gizmo:enabled:bg-transparent text-white gizmo:text-gray-500 gizmo:dark:text-gray-300 bottom-1.5 transition-colors disabled:opacity-40"

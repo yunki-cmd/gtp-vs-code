@@ -3,6 +3,7 @@ import ChatGptViewProvider from './components/chatgpt-view-provider';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const chatViewProvider = new ChatGptViewProvider(context);
+	let activeLine: number | undefined
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('chatgpt-vscode-plugin.askGPT', askChatGPT),
@@ -11,6 +12,33 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('chatgpt-vscode-plugin.refactor', askGPTToRefactor),
 		vscode.commands.registerCommand('chatgpt-vscode-plugin.addTests', askGPTToAddTests),
 		vscode.commands.registerCommand('chatgpt-vscode-plugin.resetToken', resetToken),
+		vscode.window.onDidChangeTextEditorSelection(e => {
+			activeLine = e.selections[0].active.line;
+			
+			console.log(activeLine)
+		}),
+
+		vscode.languages.registerCodeLensProvider(
+			{ scheme: '*', language: '*' },
+			{
+				provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
+					const codeLens: vscode.CodeLens[] = [];
+
+					if (activeLine !== undefined) {
+						const range = new vscode.Range(activeLine, 0, activeLine, 0);
+						const command: vscode.Command = {
+							title: 'Click para copiar',
+							command: 'extension.copyCode',
+							arguments: [document.lineAt(activeLine).text],
+						};
+						codeLens.push(new vscode.CodeLens(range, command));
+					}
+
+					return codeLens;
+				},
+			}
+		),
+
 		vscode.window.registerWebviewViewProvider("chatgpt-vscode-plugin.view", chatViewProvider, {
 			webviewOptions: { retainContextWhenHidden: true }
 		})

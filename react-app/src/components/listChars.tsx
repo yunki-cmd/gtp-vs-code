@@ -28,7 +28,7 @@ function ListChats({chatMessages}: {chatMessages: ChatMessage[]}){
                 </svg>
               ) : null}
               <div className={`ml-3  ${message.role === 'user' ? 'bg-gray-100' : 'bg-gray-50'}  rounded-lg`}>
-                <div className={`text-sm  ${message.role === 'user' ? 'text-gray-800' : 'text-black'}`} dangerouslySetInnerHTML={parseHtml(message.content)}
+                <div className={`text-sm  ${message.role === 'user' ? 'text-gray-800' : 'text-black'}`} dangerouslySetInnerHTML={parseHtml(message.content!)}
                 style={{ fontFamily: 'font-family: -apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto' }}
                 ></div>
               </div>

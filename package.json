@@ -22,7 +22,8 @@
     "onCommand:chatgpt-vscode-plugin.explainPls",
     "onCommand:chatgpt-vscode-plugin.refactor",
     "onCommand:chatgpt-vscode-plugin.addTests",
-    "onCommand:chatgpt-vscode-plugin.resetToken"
+    "onCommand:chatgpt-vscode-plugin.resetToken",
+    "onCommand:chatgpt-vscode-plugin.showCodeOptions"
   ],
   "main": "./dist/extension.js",
   "contributes": {

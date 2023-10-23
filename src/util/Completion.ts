@@ -6,10 +6,10 @@ import {OpenAIClient, AzureKeyCredential} from "@azure/openai"
 const azureApiKey = ""
 const endpoint = "";
 
-const messages = [
+/* const messages = [
   { role: "system", content: "You are a helpful assistant." },
   { role: "user", content: "me puedes dar un codigo de ejemplo en python que saluda" },
-];
+]; */
 
 function streamChatCompletions(client:any, deploymentId:any, messages:any, options:any) {
   const events = client.listChatCompletions(deploymentId, messages, options);

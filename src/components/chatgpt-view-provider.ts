@@ -32,6 +32,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
                     this.sendOpenAiApiRequest(data.value);
                 } else {
+                    console.log(data)
                     this.sendOpenAiApiRequestAzure(data.value, data.stream);
                 }
             }
@@ -104,12 +105,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
                     stop: ['\n\n\n', '<|im_end|>'],
                 });
 
-               /*  for await (const part of completion) {
-                    console.log(part);
-                    console.log(part.choices[0]?.finish_reason);
-                    console.log(part.choices[0]?.delta || '');
-                    this.sendMessageToWebView({ type: 'addResponse', value: completion });
-                } */
 
             } catch (error: any) {
                 await vscode.window.showErrorMessage("Error sending request to ChatGPT", error);

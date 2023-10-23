@@ -14,6 +14,11 @@ interface useHistoryChatInterfaz {
   removeHistoryChats: () => void
 }
 
+interface useModelsInterfaz{
+  model: 'gpt3.5' | 'gpt4',
+  updateModel: (model:string) => void
+}
+
 const useHistoryChat = create<useHistoryChatInterfaz>((set) => ({
   historyChats: [],
   addHistoryChats: (newChatMessage: ChatMessage) => set((prevState: useHistoryChatInterfaz) => ({
@@ -30,6 +35,12 @@ const useInputPromt = create<UseInputPromtInterfaz>((set) => ({
 }))
 
 
+const useModels = create<useModelsInterfaz>((set) => ({
+  model: "gpt3.5",
+  updateModel: (model:any) => set({ model }),
+}))
 
 
-export { useInputPromt, useHistoryChat }
+
+
+export { useInputPromt, useHistoryChat, useModels }

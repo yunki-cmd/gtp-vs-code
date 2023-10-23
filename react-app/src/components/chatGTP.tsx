@@ -1,11 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-//import { vscode } from '../main';
+import { vscode } from '../main';
 import { useEffect, useState } from 'react';
 import ChatComponent from './chats';
 import { handlerFetchApiChatGtp } from '../utils/request.js'
-import {useHistoryChat} from "../store/strore.js"
+import {useHistoryChat, useModels} from "../store/strore.js"
 
 // types
 
@@ -16,6 +16,8 @@ const ChatGptComponent = () => {
   //const [message, setMessage] = useState<ResposeCompletion>();
 
   const {addHistoryChats, historyChats} = useHistoryChat()
+
+  const {model} = useModels()
 
   //const [historyChats, setHistoryChats] = useState<ChatMessage[]>([]);
 
@@ -40,6 +42,9 @@ const ChatGptComponent = () => {
     // Maneja el mensaje según su tipo
     if (messageEvent.type === 'addResponse') {
       // setea el mensaje que llega desde openai
+
+      addHistoryChats(messageEvent.value.choices[0].message)
+      setDisable(false)
 
       /* setHistoryChats(prevState => {
         // Usar la forma de función para asegurarse de tener la última versión del estado
@@ -107,9 +112,15 @@ const ChatGptComponent = () => {
       const ultimRole = historyChats[ultimoIndice].role;
       if(ultimRole === 'assistant') return
 
-      const response:ChatMessage = await handlerFetchApiChatGtp(historyChats).then(resp => resp.choices[0].message);
+      let response:ChatMessage
+      if(model === "gpt3.5"){
+        response = await handlerFetchApiChatGtp(historyChats).then(resp => resp.choices[0].message);
+        setDisable(!disable)
+      } else {
+        vscode.postMessage({ type: 'askChatGPT', value: historyChats, azure:true, stream:false });
+        return
+      }
       
-      setDisable(!disable)
 
       const promtResponse:ChatMessage = {role: 'assistant', content: response.content};
       addHistoryChats(promtResponse)
